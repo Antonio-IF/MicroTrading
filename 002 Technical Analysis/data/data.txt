@@ -1,0 +1,5 @@
+datasets:
+- AAPL : Apple train & test for 1m and 5m 
+- BTC.USD: Criptocurrency train & test 1m and 5m 
+
+This datasets using for validate the model of trading project. 
