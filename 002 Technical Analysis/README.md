@@ -16,3 +16,8 @@ We will use the following datasets:
 
 BTC-USD (5-minute and 1-minute intervals)
 AAPL (5-minute and 1-minute intervals) 
+
+# Steps
+
+
+
