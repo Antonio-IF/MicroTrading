@@ -16,7 +16,7 @@ btc_1d = pd.read_csv('../data/BTC-USD/btc_project_5m_train.csv')
 # 
 
 # Importing dataset
-data = pd.read_csv("aapl_project_train.csv").dropna()
+data = aapl_5m
 
 # Pre-calculating indicators to avoid repeated computation
 def precalculate_indicators(data, rsi_window, williams_window, atr_window):
