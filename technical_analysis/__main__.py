@@ -3,7 +3,7 @@
 # project_name/technical_analysis/main.py
 import pandas as pd 
 import optuna
-from technical_analysis.utils import create_signals
+from utils.utils import create_signals
 
 
 # Importar dataset
