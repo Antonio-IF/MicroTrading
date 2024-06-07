@@ -111,28 +111,21 @@ def profit(trial, combination: int, **kwargs):
     return portfolio_value[-1]
 
 def main():
-    study = optuna.create_study(direction="maximize")
+    # Diccionario para almacenar los mejores trials por combinación
+    best_trials = {}
 
     for combination in range(8):
+        study = optuna.create_study(direction="maximize")
         study.optimize(lambda x: profit(x, combination), n_trials=50, n_jobs=-1)
+        best_trials[combination] = study.best_trial
 
     print("Best trials for each combination:")
-    for combination in range(8):
-        trial = study.best_trial(combination)
+    for combination, trial in best_trials.items():
         print(f"Combination: {combination}")
         print(f"Value: {trial.value}")
         print("Params:")
         for key, value in trial.params.items():
             print(f"    {key}: {value}")
-
-    study.optimize(lambda x: profit(x, 3), n_trials=50, n_jobs=-1)
-
-    print("Best trial:")
-    trial = study.best_trial
-    print(f"Value: {trial.value}")
-    print("Params:")
-    for key, value in trial.params.items():
-        print(f"    {key}: {value}")
 
 if __name__ == "__main__":
     main()
