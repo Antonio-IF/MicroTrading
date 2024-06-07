@@ -115,7 +115,7 @@ def main():
 
     for combination in range(8):
         study = optuna.create_study(direction="maximize")
-        study.optimize(lambda x: profit(x, combination), n_trials=50, n_jobs=-1)
+        study.optimize(lambda x: profit(x, combination), n_trials=30, n_jobs=-1)
         best_trials[combination] = study.best_trial
 
     print("Best trials for each combination:")
