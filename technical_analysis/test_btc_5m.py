@@ -6,24 +6,23 @@ import ta
 # Load the dataset
 btc_5m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
 
-# Optimal parameters from Optuna
+# Optimal parameters
 best_params = {
-    "n_shares": 37.306181957819035,
+    "n_shares": 38,
     "stop_loss": 0.11460175983828856,
     "take_profit": 0.13916726601126078,
     "williams_window": 116,
-    "williams_r_lower_threshold": -88,
-    "williams_r_upper_threshold": -8,
-    "atr_lower_threshold": 33,
-    "atr_upper_threshold": 85
+    "williams_r_lower_threshold": -100,
+    "williams_r_upper_threshold": -12
 }
 
-# Calculate the Williams %R and ATR using the optimal parameters
+# Calculate the Williams %R using the optimal parameters
 william_btc_5m = ta.momentum.WilliamsRIndicator(
-    high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close'], lbp=best_params["williams_window"]
+    high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close']
 )
 btc_5m['Williams_R'] = william_btc_5m.williams_r()
 
+# Calculate the ATR
 atr_btc_5m = ta.volatility.AverageTrueRange(
     high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close']
 )
@@ -37,8 +36,8 @@ technical_data_btc_5m["Williams_R"] = btc_5m["Williams_R"]
 technical_data_btc_5m = technical_data_btc_5m.dropna()
 
 # Generate buy and sell signals using the optimal thresholds
-technical_data_btc_5m["BUY_SIGNAL"] = (technical_data_btc_5m["ATR"] < best_params["atr_lower_threshold"]) & (technical_data_btc_5m.Williams_R < best_params["williams_r_lower_threshold"])
-technical_data_btc_5m["SELL_SIGNAL"] = (technical_data_btc_5m["ATR"] > best_params["atr_upper_threshold"]) & (technical_data_btc_5m.Williams_R > best_params["williams_r_upper_threshold"])
+technical_data_btc_5m["BUY_SIGNAL"] = (technical_data_btc_5m["ATR"] < best_params["williams_r_lower_threshold"]) 
+technical_data_btc_5m["SELL_SIGNAL"] = (technical_data_btc_5m["ATR"] > best_params["williams_r_upper_threshold"])
 
 # Backtesting parameters
 capital = 1_000_000
