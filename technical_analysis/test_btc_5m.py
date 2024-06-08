@@ -6,38 +6,31 @@ import ta
 # Load the dataset
 btc_5m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
 
-# Optimal parameters
+# Optimal parameters from Optuna
 best_params = {
-    "n_shares": 38,
-    "stop_loss": 0.11460175983828856,
-    "take_profit": 0.13916726601126078,
-    "williams_window": 116,
-    "williams_r_lower_threshold": -100,
-    "williams_r_upper_threshold": -12
+    "n_shares": 107.76747742408709,
+    "stop_loss": 0.0784524647519304,
+    "take_profit": 0.08443871610882869,
+    "rsi_window": 100,
+    "rsi_lower_threshold": 17,
+    "rsi_upper_threshold": 84
 }
 
-# Calculate the Williams %R using the optimal parameters
-william_btc_5m = ta.momentum.WilliamsRIndicator(
-    high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close']
+# Calculate the RSI using the optimal parameters
+rsi_btc_5m = ta.momentum.RSIIndicator(
+    close=btc_5m['Close'], window=best_params["rsi_window"]
 )
-btc_5m['Williams_R'] = william_btc_5m.williams_r()
-
-# Calculate the ATR
-atr_btc_5m = ta.volatility.AverageTrueRange(
-    high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close']
-)
-btc_5m['ATR'] = atr_btc_5m.average_true_range()
+btc_5m['RSI'] = rsi_btc_5m.rsi()
 
 # Create DataFrame for signals
 technical_data_btc_5m = pd.DataFrame()
 technical_data_btc_5m["Close"] = btc_5m["Close"]
-technical_data_btc_5m["ATR"] = btc_5m["ATR"]
-technical_data_btc_5m["Williams_R"] = btc_5m["Williams_R"]
+technical_data_btc_5m["RSI"] = btc_5m["RSI"]
 technical_data_btc_5m = technical_data_btc_5m.dropna()
 
 # Generate buy and sell signals using the optimal thresholds
-technical_data_btc_5m["BUY_SIGNAL"] = (technical_data_btc_5m["ATR"] < best_params["williams_r_lower_threshold"]) 
-technical_data_btc_5m["SELL_SIGNAL"] = (technical_data_btc_5m["ATR"] > best_params["williams_r_upper_threshold"])
+technical_data_btc_5m["BUY_SIGNAL"] = technical_data_btc_5m["RSI"] < best_params["rsi_lower_threshold"]
+technical_data_btc_5m["SELL_SIGNAL"] = technical_data_btc_5m["RSI"] > best_params["rsi_upper_threshold"]
 
 # Backtesting parameters
 capital = 1_000_000
