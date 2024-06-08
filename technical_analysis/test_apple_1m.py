@@ -7,9 +7,9 @@ import ta.momentum
 
 # Datasets
 aapl_1m = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_1m_test.csv").dropna()
-aapl_5m = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_test.csv").dropna()
-btc_1m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_1m_test.csv").dropna()
-btc_5m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
+# aapl_5m = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_test.csv").dropna()
+# btc_1m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_1m_test.csv").dropna()
+# btc_5m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
 
 # Indicators
 rsi_aapl_1m = ta.momentum.RSIIndicator(close=aapl_1m['Close'], window=150) # Optuna say 150 but a lower window have more operations a long of the time 
@@ -149,10 +149,5 @@ plt.show()
 
 #---------------------------------------------------------#
 
-technical_data_aapl_5m = pd.DataFrame()
-
-technical_data_btc_1m = pd.DataFrame()
-
-technical_data_btc_5m = pd.DataFrame()
 
 
