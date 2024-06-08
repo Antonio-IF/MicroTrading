@@ -11,3 +11,70 @@ Traders who use technical analysis look at historical price data and use various
 *Technical Analysis of Apple (AAPL) and Bitcoin (BTC) for Optimal Trading Returns*
 
 This project delves into the technical analysis of two prominent assets, Apple (AAPL) and Bitcoin (BTC), with the overall goal of maximizing trading returns. To achieve this goal, we employ three different indicators: the Relative Strength Index (RSI), Williams %R, and Average True Range (ATR). By implementing seven strategies that combine these indicators, generating unique signals for buying and selling opportunities. In addition, we optimize the parameters associated with each indicator to guarantee the best possible results.
+
+## Steps to run the code
+
+Aquí tienes los pasos en inglés y en formato Markdown para que los puedas pegar en tu archivo `README.md`:
+
+```markdown
+# Instructions to Run the MicroTrading Project
+
+## Steps for Windows:
+
+1. **Create a virtual environment**:
+   ```sh
+   python -m venv venv
+   ```
+
+2. **Activate the virtual environment**:
+   ```sh
+   .\venv\Scripts\activate
+   ```
+
+3. **Upgrade `pip`**:
+   ```sh
+   pip install --upgrade pip
+   ```
+
+4. **Install dependencies**:
+   ```sh
+   pip install -r technical_analysis\requirements.txt
+   ```
+
+5. **Run the main script**:
+   ```sh
+   python run technical_analysis\__main__.py
+   ```
+
+## Steps for Mac:
+
+1. **Create a virtual environment**:
+   ```sh
+   python3 -m venv venv
+   ```
+
+2. **Activate the virtual environment**:
+   ```sh
+   source venv/bin/activate
+   ```
+
+3. **Upgrade `pip`**:
+   ```sh
+   pip install --upgrade pip
+   ```
+
+4. **Install dependencies**:
+   ```sh
+   pip install -r technical_analysis/requirements.txt
+   ```
+
+5. **Run the main script**:
+   ```sh
+   python run technical_analysis\__main__.py
+   ```
+
+## Additional Notes:
+- **Ensure that the `requirements.txt` file is in the correct directory and contains all necessary dependencies.**
+- **Consider adding a `README.md` file in your repository with these detailed steps for easy reference.**
+- **Make sure your main script `__main__.py` has a defined entry point if necessary, using something like `if __name__ == "__main__":`.**
+```
