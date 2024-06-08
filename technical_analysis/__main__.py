@@ -42,7 +42,7 @@ def profit(trial, combination: int, **kwargs):
                                     rsi_window=rsi_window,
                                     rsi_lower_threshold=rsi_lower_threshold,
                                     rsi_upper_threshold=rsi_upper_threshold,
-                                    # williams_window=williams_window,
+                                    williams_window=williams_window,
                                     williams_r_lower_threshold=williams_r_lower_threshold,
                                     williams_r_upper_threshold=williams_r_upper_threshold,
                                     atr_window=atr_window)

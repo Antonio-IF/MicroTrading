@@ -3,56 +3,43 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import ta
-import ta.momentum
 
 # Datasets
 aapl_1m = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_1m_test.csv").dropna()
-# aapl_5m = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_test.csv").dropna()
-# btc_1m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_1m_test.csv").dropna()
-# btc_5m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
+
+# Parameters from Optuna
+best_params = {
+    "n_shares": 115.07012640907746,
+    "stop_loss": 0.12555271275665314,
+    "take_profit": 0.05637290382746126,
+    "williams_window": 103,
+    "williams_r_lower_threshold": -100,
+    "williams_r_upper_threshold": -7,
+    "atr_window": 193
+}
 
 # Indicators
-rsi_aapl_1m = ta.momentum.RSIIndicator(close=aapl_1m['Close'], window=150) # Optuna say 150 but a lower window have more operations a long of the time 
-william_aapl_1m = ta.momentum.WilliamsRIndicator(high=aapl_1m['High'], low=aapl_1m['Low'], close=aapl_1m['Close'])
-
-#---------------------------------------------------------#
+rsi_window = 150  # This was the window found to be optimal earlier
+william_aapl_1m = ta.momentum.WilliamsRIndicator(high=aapl_1m['High'], low=aapl_1m['Low'], close=aapl_1m['Close'], lbp=best_params["williams_window"])
 
 # Dataframe for AAPL_1M
 technical_data_aapl_1m = pd.DataFrame()
 technical_data_aapl_1m["Close"] = aapl_1m["Close"]
-technical_data_aapl_1m["RSI"] = rsi_aapl_1m.rsi()
+technical_data_aapl_1m["RSI"] = ta.momentum.RSIIndicator(close=aapl_1m['Close'], window=rsi_window).rsi()
 technical_data_aapl_1m["William_R"] = william_aapl_1m.williams_r()
 technical_data_aapl_1m = technical_data_aapl_1m.dropna()
 
-#---------------------------------------------------------#
+# Generate Buy and Sell Signals
+technical_data_aapl_1m["BUY_SIGNAL"] = (technical_data_aapl_1m.RSI < 30) & (technical_data_aapl_1m.William_R < best_params["williams_r_lower_threshold"])
+technical_data_aapl_1m["SELL_SIGNAL"] = (technical_data_aapl_1m.RSI > 83) & (technical_data_aapl_1m.William_R > best_params["williams_r_upper_threshold"])
 
-# GENERATE BUY AND SELL SIGNALS
-
-technical_data_aapl_1m["BUY_SIGNAL"] = (technical_data_aapl_1m.RSI < 30) & (technical_data_aapl_1m.William_R < -88) 
-technical_data_aapl_1m["SELL_SIGNAL"] = (technical_data_aapl_1m.RSI > 83) & (technical_data_aapl_1m.William_R > -8) 
-
-
-            # Filter and print rows where BUY_SIGNAL or SELL_SIGNAL is True
-            #signals = technical_data_aapl_1m[(technical_data_aapl_1m["BUY_SIGNAL"] == True) | (technical_data_aapl_1m["SELL_SIGNAL"] == True)]
-            #print(signals)
-
-# Backtesting 
-
-#  n_shares: 149.81454328396893
-#  stop_loss: 0.09449106039009689
-#  take_profit: 0.050100343631403574
-#  rsi_window: 150
-#  rsi_lower_threshold: 30
-#  rsi_upper_threshold: 83
-#  williams_r_lower_threshold: -88
-#  williams_r_upper_threshold: -8
-
+# Backtesting
 
 # Parameters
 capital = 1_000_000
-n_shares = 149.81454328396893
-stop_loss = 0.09449106039009689
-take_profit = 0.050100343631403574
+n_shares = best_params["n_shares"]
+stop_loss = best_params["stop_loss"]
+take_profit = best_params["take_profit"]
 COM = 0.125 / 100  # Commission
 
 # Initialize
@@ -112,8 +99,7 @@ for i, row in technical_data_aapl_1m.iterrows():
     
     # Portfolio value through time
     long_position_value = sum(pos["n_shares"] * row.Close for pos in long_positions)
-    short_position_value = sum(pos["n_shares"] * (pos["sold_at"] - 
-                                                  row.Close) for pos in short_positions)
+    short_position_value = sum(pos["n_shares"] * (pos["sold_at"] - row.Close) for pos in short_positions)
     portfolio_value.append(capital + long_position_value + short_position_value)
 
 # Close all positions
@@ -144,10 +130,3 @@ plt.xlabel('Time')
 plt.ylabel('Portfolio Value')
 plt.legend()
 plt.show()
-
-
-
-#---------------------------------------------------------#
-
-
-

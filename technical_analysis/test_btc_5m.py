@@ -1,36 +1,44 @@
 # Libraries
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import ta
 
 # Load the dataset
-aapl_5m = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_test.csv").dropna()
+btc_5m = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
 
 # Optimal parameters from Optuna
 best_params = {
-    "n_shares": 109.29367029861646,
-    "stop_loss": 0.08683701926800959,
-    "take_profit": 0.1076720504201367,
-    "williams_window": 186,
+    "n_shares": 37.306181957819035,
+    "stop_loss": 0.11460175983828856,
+    "take_profit": 0.13916726601126078,
+    "williams_window": 116,
     "williams_r_lower_threshold": -88,
-    "williams_r_upper_threshold": -8
+    "williams_r_upper_threshold": -8,
+    "atr_lower_threshold": 33,
+    "atr_upper_threshold": 85
 }
 
-# Calculate the Williams %R using the optimal parameters
-william_aapl_5m = ta.momentum.WilliamsRIndicator(
-    high=aapl_5m['High'], low=aapl_5m['Low'], close=aapl_5m['Close'], lbp=best_params["williams_window"]
+# Calculate the Williams %R and ATR using the optimal parameters
+william_btc_5m = ta.momentum.WilliamsRIndicator(
+    high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close'], lbp=best_params["williams_window"]
 )
-aapl_5m['Williams_R'] = william_aapl_5m.williams_r()
+btc_5m['Williams_R'] = william_btc_5m.williams_r()
+
+atr_btc_5m = ta.volatility.AverageTrueRange(
+    high=btc_5m['High'], low=btc_5m['Low'], close=btc_5m['Close']
+)
+btc_5m['ATR'] = atr_btc_5m.average_true_range()
 
 # Create DataFrame for signals
-technical_data_aapl_5m = pd.DataFrame()
-technical_data_aapl_5m["Close"] = aapl_5m["Close"]
-technical_data_aapl_5m["Williams_R"] = aapl_5m["Williams_R"]
+technical_data_btc_5m = pd.DataFrame()
+technical_data_btc_5m["Close"] = btc_5m["Close"]
+technical_data_btc_5m["ATR"] = btc_5m["ATR"]
+technical_data_btc_5m["Williams_R"] = btc_5m["Williams_R"]
+technical_data_btc_5m = technical_data_btc_5m.dropna()
 
 # Generate buy and sell signals using the optimal thresholds
-technical_data_aapl_5m["BUY_SIGNAL"] = technical_data_aapl_5m["Williams_R"] < best_params["williams_r_lower_threshold"]
-technical_data_aapl_5m["SELL_SIGNAL"] = technical_data_aapl_5m["Williams_R"] > best_params["williams_r_upper_threshold"]
+technical_data_btc_5m["BUY_SIGNAL"] = (technical_data_btc_5m["ATR"] < best_params["atr_lower_threshold"]) & (technical_data_btc_5m.Williams_R < best_params["williams_r_lower_threshold"])
+technical_data_btc_5m["SELL_SIGNAL"] = (technical_data_btc_5m["ATR"] > best_params["atr_upper_threshold"]) & (technical_data_btc_5m.Williams_R > best_params["williams_r_upper_threshold"])
 
 # Backtesting parameters
 capital = 1_000_000
@@ -39,13 +47,13 @@ stop_loss = best_params["stop_loss"]
 take_profit = best_params["take_profit"]
 COM = 0.125 / 100  # Commission
 
-# Initialization
+# Initialize
 long_positions = []
 short_positions = []
 portfolio_value = [capital]
 
 # Backtesting
-for i, row in technical_data_aapl_5m.iterrows():
+for i, row in technical_data_btc_5m.iterrows():
     # Close positions that have reached take profit or stop loss
     long_pos_copy = long_positions.copy()
     for pos in long_pos_copy: 
@@ -100,20 +108,20 @@ for i, row in technical_data_aapl_5m.iterrows():
 
 # Close all positions
 for pos in long_positions.copy():
-    capital += technical_data_aapl_5m.iloc[-1].Close * pos["n_shares"] * (1 - COM)
+    capital += technical_data_btc_5m.iloc[-1].Close * pos["n_shares"] * (1 - COM)
     long_positions.remove(pos)
 
 for pos in short_positions.copy():
-    capital -= technical_data_aapl_5m.iloc[-1].Close * pos["n_shares"] * (1 + COM)
+    capital -= technical_data_btc_5m.iloc[-1].Close * pos["n_shares"] * (1 + COM)
     short_positions.remove(pos)
 
 portfolio_value.append(capital)
 
 # Benchmark portfolio
 capital_benchmark = 1_000_000
-shares_to_buy = capital_benchmark // (technical_data_aapl_5m.Close.values[0] * (1 + COM))
-capital_benchmark -= shares_to_buy * technical_data_aapl_5m.Close.values[0] * (1 + COM)
-portfolio_value_benchmark = (shares_to_buy * technical_data_aapl_5m.Close) + capital_benchmark
+shares_to_buy = capital_benchmark // (technical_data_btc_5m.Close.values[0] * (1 + COM))
+capital_benchmark -= shares_to_buy * technical_data_btc_5m.Close.values[0] * (1 + COM)
+portfolio_value_benchmark = (shares_to_buy * technical_data_btc_5m.Close) + capital_benchmark
 
 # Plot portfolio value
 plt.plot(portfolio_value, label='Active')
