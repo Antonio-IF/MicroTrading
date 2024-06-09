@@ -2,7 +2,7 @@ import pandas as pd
 import ta
 
 # Cargar los datos históricos desde el CSV
-aapl_1m = pd.read_csv("../002_Technical_Analysis/aapl_project_1m_train.csv").dropna()
+aapl_1m = pd.read_csv("../Upgrade_coding/aapl_project_1m_train.csv").dropna()
 
 # Asegurarse de que la columna 'Close' esté presente
 if 'Close' not in aapl_1m.columns:
