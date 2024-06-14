@@ -172,16 +172,3 @@ class StockTradingModel:
         return self.results
 
 
-
-# Importing datasets to train models :)
-# Train & Test
-data_aapl_1m_Tr = pd.read_csv("Datasets/aapl_project_1m_train.csv")
-data_aapl_5m_Tr = pd.read_csv("Datasets/aapl_project_train.csv")
-data_btc_1m_Tr  = pd.read_csv("Datasets/btc_project_1m_train.csv")
-data_btc_5m_Tr  = pd.read_csv("Datasets/btc_project_train.csv")
-
-# Validation
-data_aapl_1m_ts = pd.read_csv("Datasets/aapl_project_1m_test.csv")
-data_aapl_5m_ts = pd.read_csv("Datasets/aapl_project_test.csv")
-data_btc_1m_ts  = pd.read_csv("Datasets/btc_project_1m_test.csv")
-data_btc_5m_ts  = pd.read_csv("Datasets/btc_project_test.csv")
