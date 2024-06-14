@@ -14,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import VotingClassifier
 
-from Classification.utils.utils import StockTradingModel
+from .utils.utils import StockTradingModel
 
 
 # Importing datasets to train models :)
