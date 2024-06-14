@@ -36,40 +36,40 @@ class StockTradingModel:
         return df_clean
 
     def objective(self, trial, model_name, X_train, y_train):
-    if model_name == 'LogisticRegression':
-        C = trial.suggest_float('C', 1e-3, 1e3, log=True)
-        fit_intercept = trial.suggest_categorical('fit_intercept', [True, False])
-        l1_ratio = trial.suggest_float('l1_ratio', 0, 1)
-        model = LogisticRegression(C=C, fit_intercept=fit_intercept, penalty='elasticnet', l1_ratio=l1_ratio, solver='saga', max_iter=30000)
-    elif model_name == 'SVC':
-        C = trial.suggest_float('C', 1e-3, 1e3, log=True)
-        kernel = trial.suggest_categorical('kernel', ['linear', 'rbf', 'sigmoid'])
-        gamma = trial.suggest_categorical('gamma', ['scale', 'auto'])
-        model = SVC(C=C, kernel=kernel, gamma=gamma, max_iter=30000)
-    elif model_name == 'XGB':
-        n_estimators = trial.suggest_int('n_estimators', 50, 200)
-        max_depth = trial.suggest_int('max_depth', 2, 16)
-        max_leaves = trial.suggest_int('max_leaves', 0, 256)
-        learning_rate = trial.suggest_float('learning_rate', 0.01, 0.3)
-        booster = trial.suggest_categorical('booster', ['gbtree', 'gblinear', 'dart'])
-        gamma = trial.suggest_float('gamma', 0, 5)
-        reg_alpha = trial.suggest_float('reg_alpha', 0, 5)
-        reg_lambda = trial.suggest_float('reg_lambda', 0, 5)
-        model = XGBClassifier(
-            n_estimators=n_estimators,
-            max_depth=max_depth,
-            max_leaves=max_leaves,
-            learning_rate=learning_rate,
-            booster=booster,
-            gamma=gamma,
-            reg_alpha=reg_alpha,
-            reg_lambda=reg_lambda,
-            use_label_encoder=False,
-            eval_metric='mlogloss'
-        )
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_train)
-    return f1_score(y_train, y_pred)
+        if model_name == 'LogisticRegression':
+            C = trial.suggest_float('C', 1e-3, 1e3, log=True)
+            fit_intercept = trial.suggest_categorical('fit_intercept', [True, False])
+            l1_ratio = trial.suggest_float('l1_ratio', 0, 1)
+            model = LogisticRegression(C=C, fit_intercept=fit_intercept, penalty='elasticnet', l1_ratio=l1_ratio, solver='saga', max_iter=30000)
+        elif model_name == 'SVC':
+            C = trial.suggest_float('C', 1e-3, 1e3, log=True)
+            kernel = trial.suggest_categorical('kernel', ['linear', 'rbf', 'sigmoid'])
+            gamma = trial.suggest_categorical('gamma', ['scale', 'auto'])
+            model = SVC(C=C, kernel=kernel, gamma=gamma, max_iter=30000)
+        elif model_name == 'XGB':
+            n_estimators = trial.suggest_int('n_estimators', 50, 200)
+            max_depth = trial.suggest_int('max_depth', 2, 16)
+            max_leaves = trial.suggest_int('max_leaves', 0, 256)
+            learning_rate = trial.suggest_float('learning_rate', 0.01, 0.3)
+            booster = trial.suggest_categorical('booster', ['gbtree', 'gblinear', 'dart'])
+            gamma = trial.suggest_float('gamma', 0, 5)
+            reg_alpha = trial.suggest_float('reg_alpha', 0, 5)
+            reg_lambda = trial.suggest_float('reg_lambda', 0, 5)
+            model = XGBClassifier(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                max_leaves=max_leaves,
+                learning_rate=learning_rate,
+                booster=booster,
+                gamma=gamma,
+                reg_alpha=reg_alpha,
+                reg_lambda=reg_lambda,
+                use_label_encoder=False,
+                eval_metric='mlogloss'
+            )
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_train)
+        return f1_score(y_train, y_pred)
 
     def optimize_model(self, model_name, X_train, y_train):
         study = optuna.create_study(direction='maximize')
