@@ -7,7 +7,7 @@ import ta
 
 # Model Libraries...
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
+from sklearn.metrics import confusion_matrix, mean_squared_error, accuracy_score, f1_score
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
@@ -35,33 +35,40 @@ class StockTradingModel:
         df_clean.dropna(inplace=True)
         return df_clean
 
+    def generate_labels(self, df):
+        df['y_buy'] = (df['Y'] > df['Close']).astype(int)
+        df['y_sell'] = (df['Y'] < df['Close']).astype(int)
+        return df
+
     def objective(self, trial, model_name, X_train, y_train):
-        if model_name == 'LogisticRegression':
-            C = trial.suggest_float('C', 1e-3, 1e3, log=True)
-            fit_intercept = trial.suggest_categorical('fit_intercept', [True, False])
-            l1_ratio = trial.suggest_float('l1_ratio', 0, 1)
-            model = LogisticRegression(C=C, fit_intercept=fit_intercept, penalty='elasticnet', l1_ratio=l1_ratio, solver='saga', max_iter=30000)
-        elif model_name == 'SVC':
-            C = trial.suggest_float('C', 1e-3, 1e3, log=True)
-            kernel = trial.suggest_categorical('kernel', ['linear', 'poly', 'rbf', 'sigmoid'])
-            gamma = trial.suggest_categorical('gamma', ['scale', 'auto'])
-            model = SVC(C=C, kernel=kernel, gamma=gamma)
-        elif model_name == 'XGB':
-            n_estimators = trial.suggest_int('n_estimators', 50, 200)
-            max_depth = trial.suggest_int('max_depth', 2, 10)
-            max_leaves = trial.suggest_int('max_leaves', 0, 20)
-            learning_rate = trial.suggest_float('learning_rate', 0.01, 0.2)
-            booster = trial.suggest_categorical('booster', ['gbtree', 'gblinear', 'dart'])
-            gamma = trial.suggest_float('gamma', 0, 5)
-            reg_alpha = trial.suggest_float('reg_alpha', 0, 5)
-            reg_lambda = trial.suggest_float('reg_lambda', 0, 5)
-            model = XGBClassifier(n_estimators=n_estimators, max_depth=max_depth, max_leaves=max_leaves,
-                                  learning_rate=learning_rate, booster=booster, gamma=gamma,
-                                  reg_alpha=reg_alpha, reg_lambda=reg_lambda, use_label_encoder=False, eval_metric='logloss')
-        
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_train)
-        return f1_score(y_train, y_pred)
+            if model_name == 'LogisticRegression':
+                C = trial.suggest_float('C', 1e-3, 1e3, log=True)
+                fit_intercept = trial.suggest_categorical('fit_intercept', [True, False])
+                l1_ratio = trial.suggest_float('l1_ratio', 0, 1)
+                model = LogisticRegression(C=C, fit_intercept=fit_intercept, penalty='elasticnet', l1_ratio=l1_ratio, solver='saga', max_iter=30000)
+            
+            elif model_name == 'SVC':
+                C = trial.suggest_float('C', 1e-3, 1e3, log=True)
+                kernel = trial.suggest_categorical('kernel', ['linear', 'poly', 'rbf', 'sigmoid'])
+                gamma = trial.suggest_categorical('gamma', ['scale', 'auto'])
+                model = SVC(C=C, kernel=kernel, gamma=gamma, max_iter=30000)
+            
+            elif model_name == 'XGB':
+                n_estimators = trial.suggest_int('n_estimators', 50, 200)
+                max_depth = trial.suggest_int('max_depth', 2, 10)
+                max_leaves = trial.suggest_int('max_leaves', 0, 20)
+                learning_rate = trial.suggest_float('learning_rate', 0.01, 0.2)
+                booster = trial.suggest_categorical('booster', ['gbtree', 'gblinear', 'dart'])
+                gamma = trial.suggest_float('gamma', 0, 5)
+                reg_alpha = trial.suggest_float('reg_alpha', 0, 5)
+                reg_lambda = trial.suggest_float('reg_lambda', 0, 5)
+                model = XGBClassifier(n_estimators=n_estimators, max_depth=max_depth, max_leaves=max_leaves,
+                                    learning_rate=learning_rate, booster=booster, gamma=gamma,
+                                    reg_alpha=reg_alpha, reg_lambda=reg_lambda, use_label_encoder=False, eval_metric='logloss', max_iter=30000)
+
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_train)
+            return f1_score(y_train, y_pred)
 
     def optimize_model(self, X, y):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -75,12 +82,14 @@ class StockTradingModel:
         return best_models
 
     def run_optimization(self, df):
-        X_buy = df.drop(columns=['y_buy', 'y_sell'])
-        y_buy = df['y_buy']
-        y_sell = df['y_sell']
+        df_clean = self.preprocess_data(df)
+        df_clean = self.generate_labels(df_clean)
+        X = df_clean.drop(columns=['y_buy', 'y_sell', 'Y', 'Close'])
+        y_buy = df_clean['y_buy']
+        y_sell = df_clean['y_sell']
 
-        best_models_buy = self.optimize_model(X_buy, y_buy)
-        best_models_sell = self.optimize_model(X_buy, y_sell)
+        best_models_buy = self.optimize_model(X, y_buy)
+        best_models_sell = self.optimize_model(X, y_sell)
 
         # Entrenar VotingClassifier con los mejores modelos encontrados
         voting_clf_buy = VotingClassifier(estimators=[
@@ -95,8 +104,8 @@ class StockTradingModel:
             ('XGB', XGBClassifier(**best_models_sell['XGB'], use_label_encoder=False, eval_metric='logloss'))
         ], voting='hard')
 
-        voting_clf_buy.fit(X_buy, y_buy)
-        voting_clf_sell.fit(X_buy, y_sell)
+        voting_clf_buy.fit(X, y_buy)
+        voting_clf_sell.fit(X, y_sell)
 
         return voting_clf_buy, voting_clf_sell
 
@@ -104,4 +113,16 @@ class StockTradingModel:
         results = Parallel(n_jobs=-1)(delayed(self.run_optimization)(df) for df in self.dataframes)
         return results
 
+# Función para cargar DataFrames desde un archivo CSV (ajusta según sea necesario)
+def get_dataframes():
+    # Aquí deberías cargar tus DataFrames
+    # Ejemplo: dfs = [pd.read_csv(f'file_{i}.csv') for i in range(n)]
+    # Sustituye esto con la lógica adecuada
+    dfs = []
+    return dfs
 
+if __name__ == "__main__":
+    dataframes = get_dataframes()
+    model = StockTradingModel(dataframes)
+    results = model.get_results()
+    print(results)
