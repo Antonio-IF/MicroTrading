@@ -70,8 +70,3 @@ This project delves into the technical analysis of two prominent assets, Apple (
    python run technical_analysis\__main__.py
    ```
 
-## Additional Notes:
-- **Ensure that the `requirements.txt` file is in the correct directory and contains all necessary dependencies.**
-- **Consider adding a `README.md` file in your repository with these detailed steps for easy reference.**
-- **Make sure your main script `__main__.py` has a defined entry point if necessary, using something like `if __name__ == "__main__":`.**
-```
