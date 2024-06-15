@@ -1,105 +1,56 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 import ta
-import optuna
-from itertools import combinations
+from sklearn.ensemble import VotingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from xgboost import XGBClassifier
+import numpy as np
 
-class TradingStrategy:
-    def __init__(self, data, initial_capital=1_000_000, com=0.125 / 100):
+class TradingStrategyWithModels:
+    def __init__(self, data, buy_model, sell_model, initial_capital, com=0.125 / 100):
         self.data = data
+        self.buy_model = buy_model
+        self.sell_model = sell_model
         self.initial_capital = initial_capital
         self.com = com
         self.signals = None
     
     def calculate_indicators(self):
-        # Calcular el RSI (Relative Strength Index)
         self.data['RSI'] = ta.momentum.RSIIndicator(self.data['Close'], window=14).rsi()
-
-        # Calcular el ATR (Average True Range)
         self.data['ATR'] = ta.volatility.AverageTrueRange(
             high=self.data['High'],
             low=self.data['Low'],
             close=self.data['Close'],
             window=14
         ).average_true_range()
-
-        # Calcular el Williams %R
         self.data['Williams_%R'] = ta.momentum.WilliamsRIndicator(
             high=self.data['High'],
             low=self.data['Low'],
             close=self.data['Close'],
             lbp=14
         ).williams_r()
+        self.data.dropna(inplace=True)
     
-    def generate_signals(self, indicators):
+    def generate_signals(self):
         self.signals = self.data.copy()
-        self.signals['Buy_Signal'] = 0
-        self.signals['Sell_Signal'] = 0
-        
-        if 'RSI' in indicators:
-            self.signals['Buy_Signal'] |= ((self.signals['RSI'] < 30)).astype(int)
-            self.signals['Sell_Signal'] |= ((self.signals['RSI'] > 70)).astype(int)
-        
-        if 'ATR' in indicators:
-            # Definir umbral de volatilidad para señales de compra/venta
-            atr_threshold = self.signals['ATR'].mean()
-            self.signals['Buy_Signal'] |= ((self.signals['ATR'] > atr_threshold)).astype(int)
-            self.signals['Sell_Signal'] |= ((self.signals['ATR'] < atr_threshold)).astype(int)
-        
-        if 'Williams_%R' in indicators:
-            self.signals['Buy_Signal'] |= ((self.signals['Williams_%R'] < -80)).astype(int)
-            self.signals['Sell_Signal'] |= ((self.signals['Williams_%R'] > -20)).astype(int)
-        
+        self.signals['Buy_Signal'] = self.buy_model.predict(self.signals[['RSI', 'ATR', 'Williams_%R']])
+        self.signals['Sell_Signal'] = self.sell_model.predict(self.signals[['RSI', 'ATR', 'Williams_%R']])
         return self.signals
     
-    def create_signals(self, strategy: str, **kwargs):
-        self.signals = self.data.copy()
-
-        rsi_1 = ta.momentum.RSIIndicator(self.signals.Close, kwargs["rsi_window"])  # RSI para compra
-        rsi_2 = ta.momentum.RSIIndicator(self.signals.Close, kwargs["rsi_window"])  # RSI para venta
-
-        bollinger = ta.volatility.BollingerBands(self.signals.Close, 
-                                                 kwargs["bollinger_window"], 
-                                                 kwargs["bollinger_std"])
-
-        self.signals["rsi"] = rsi_1.rsi()
-        self.signals["rsi2"] = rsi_2.rsi()
-
-        self.signals["BUY_SIGNAL"] = (self.signals["rsi"] < kwargs["rsi_lower_threshold"]) & \
-                                     (bollinger.bollinger_lband_indicator().astype(bool))
-        self.signals["SELL_SIGNAL"] = (self.signals["rsi2"] > kwargs["rsi_upper_threshold"]) & \
-                                      (bollinger.bollinger_hband_indicator().astype(bool))
-        return self.signals.dropna()
-    
-    def backtest(self, trial):
-        # Parámetros
+    def backtest(self):
         capital = self.initial_capital
-        n_shares = trial.suggest_float("n_shares", 10, 150)
-        stop_loss = trial.suggest_float("stop_loss", 0.05, 0.15)
-        take_profit = trial.suggest_float("take_profit", 0.05, 0.15)
-        max_active_operations_buy = 500
-        max_active_operations_sell = 500
-
-        rsi_window = trial.suggest_int("rsi_window", 5, 50)
-        rsi_lower_threshold = trial.suggest_int("rsi_lower_threshold", 10, 30)
-        rsi_upper_threshold = trial.suggest_int("rsi_upper_threshold", 60, 90)
-        bollinger_window = trial.suggest_int("bollinger_window", 10, 50)
-        bollinger_std = trial.suggest_float("bollinger_std", 1.0, 3.0)
-
-        technical_data = self.create_signals(
-            strategy='rsi_bollinger',
-            rsi_window=rsi_window, 
-            rsi_lower_threshold=rsi_lower_threshold,
-            rsi_upper_threshold=rsi_upper_threshold,
-            bollinger_window=bollinger_window,
-            bollinger_std=bollinger_std
-        )
+        n_shares = 100
+        stop_loss = 0.10
+        take_profit = 0.15
+        max_active_operations_buy = 150
+        max_active_operations_sell = 150
 
         long_positions = []
         short_positions = []
         portfolio_value = [capital]
 
-        for i, row in technical_data.iterrows():
-            # Cerrar posiciones long que cumplan con SL o TP
+        for i, row in self.signals.iterrows():
             long_pos_copy = long_positions.copy()
             for pos in long_pos_copy:
                 if row.Close < pos["stop_loss"]:
@@ -109,7 +60,6 @@ class TradingStrategy:
                     capital += row.Close * pos["n_shares"] * (1 - self.com)
                     long_positions.remove(pos)
                     
-            # Cerrar posiciones short que cumplan con SL o TP
             short_pos_copy = short_positions.copy()
             for pos in short_pos_copy:
                 if row.Close > pos["stop_loss"]:
@@ -119,8 +69,7 @@ class TradingStrategy:
                     capital -= row.Close * pos["n_shares"] * (1 + self.com)
                     short_positions.remove(pos)
 
-            # Verificar señal de compra
-            if row.BUY_SIGNAL and len(long_positions) < max_active_operations_buy:
+            if row.Buy_Signal and len(long_positions) < max_active_operations_buy:
                 if capital > row.Close * (1 + self.com) * n_shares:
                     capital -= row.Close * (1 + self.com) * n_shares
                     long_positions.append({
@@ -131,8 +80,7 @@ class TradingStrategy:
                         "take_profit": row.Close * (1 + take_profit)
                     })
 
-            # Verificar señal de venta
-            if row.SELL_SIGNAL and len(short_positions) < max_active_operations_sell:
+            if row.Sell_Signal and len(short_positions) < max_active_operations_sell:
                 if capital > row.Close * (1 + self.com) * n_shares:
                     capital += row.Close * (1 - self.com) * n_shares
                     short_positions.append({
@@ -143,54 +91,148 @@ class TradingStrategy:
                         "take_profit": row.Close * (1 - take_profit)
                     })
 
-            # Valor del portafolio a lo largo del tiempo
             long_position_value = sum(pos["n_shares"] * row.Close for pos in long_positions)
             short_position_value = sum(pos["n_shares"] * (pos["sold_at"] - row.Close) for pos in short_positions)
             portfolio_value.append(capital + long_position_value + short_position_value)
 
-        # Cerrar todas las posiciones al final
         long_pos_copy = long_positions.copy()
         for pos in long_pos_copy:
-            capital += row.Close * pos["n_shares"] * (1 - self.com)
+            capital += self.signals.iloc[-1].Close * pos["n_shares"] * (1 - self.com)
             long_positions.remove(pos)
 
         short_pos_copy = short_positions.copy()
         for pos in short_pos_copy:
-            capital -= row.Close * pos["n_shares"] * (1 + self.com)
+            capital -= self.signals.iloc[-1].Close * pos["n_shares"] * (1 + self.com)
             short_positions.remove(pos)
 
         portfolio_value.append(capital)
-        return portfolio_value[-1]
+        return portfolio_value
 
-def run_optimization(data):
-    strategy = TradingStrategy(data)
+def run_backtest_with_models(data, buy_model, sell_model, initial_capital):
+    strategy = TradingStrategyWithModels(data, buy_model, sell_model, initial_capital)
     strategy.calculate_indicators()
     
-    indicators = ['RSI', 'ATR', 'Williams_%R']
-    all_combinations = []
-
-    for i in range(1, len(indicators) + 1):
-        comb = list(combinations(indicators, i))
-        all_combinations.extend(comb)
-
-    best_results = []
-
-    for combination in all_combinations:
-        print(f"Optimizing for combination: {combination}")
-        strategy.generate_signals(combination)
-        study = optuna.create_study(direction='maximize')
-        study.optimize(strategy.backtest, n_trials=50)
-        best_results.append((combination, study.best_value))
+    strategy.generate_signals()
+    portfolio_value = strategy.backtest()
     
-    best_results.sort(key=lambda x: x[1], reverse=True)
-    return best_results
+    return portfolio_value
 
-# Cargar datos y ejecutar la optimización
-data = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_train.csv").dropna()
+def calculate_benchmark(data, capital_benchmark):
+    shares_to_buy = capital_benchmark // (data['Close'].values[0] * (1 + 0.00125))
+    capital_benchmark -= shares_to_buy * data['Close'].values[0] * (1 + 0.00125)
+    portfolio_value_benchmark = (shares_to_buy * data['Close']) + capital_benchmark
+    return portfolio_value_benchmark
 
-results = run_optimization(data)
+def plot_portfolio_value(portfolio_value, portfolio_value_benchmark, title):
+    plt.figure()
+    plt.plot(portfolio_value, label='Active')
+    plt.plot(portfolio_value_benchmark, label='Passive')
+    plt.title(title)
+    plt.xlabel('Time')
+    plt.ylabel('Portfolio Value')
+    plt.legend()
+    plt.show()
 
-print("Best combinations and results:")
-for res in results:
-    print(f"Combination: {res[0]}, Result: {res[1]}")
+def prepare_data_and_models():
+    # Cargar datos de prueba
+    data_aapl_1m_ts = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_1m_test.csv").dropna()
+    data_aapl_5m_ts = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_test.csv").dropna()
+    data_btc_1m_ts  = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_1m_test.csv").dropna()
+    data_btc_5m_ts  = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
 
+    # Calcular los indicadores para los datos de prueba
+    for df in [data_aapl_1m_ts, data_aapl_5m_ts, data_btc_1m_ts, data_btc_5m_ts]:
+        df['RSI'] = ta.momentum.RSIIndicator(df['Close'], window=14).rsi()
+        df['ATR'] = ta.volatility.AverageTrueRange(
+            high=df['High'],
+            low=df['Low'],
+            close=df['Close'],
+            window=14
+        ).average_true_range()
+        df['Williams_%R'] = ta.momentum.WilliamsRIndicator(
+            high=df['High'],
+            low=df['Low'],
+            close=df['Close'],
+            lbp=14
+        ).williams_r()
+        df.dropna(inplace=True)
+
+    # Definir los mejores modelos para compra y venta
+    buy_model_aapl_1m = VotingClassifier(estimators=[
+        ('LogisticRegression', LogisticRegression(C=0.0016672071354947374, l1_ratio=0.9299944673622269, max_iter=30000)),
+        ('SVC', SVC(C=990.6740326830704, gamma='auto')),
+        ('XGB', XGBClassifier(base_score=None, booster='gblinear', learning_rate=0.16834016882459785, max_depth=8, max_leaves=13, n_estimators=182))
+    ])
+
+    sell_model_aapl_1m = VotingClassifier(estimators=[
+        ('LogisticRegression', LogisticRegression(C=22.306621719180473, fit_intercept=False, l1_ratio=0.6179617851107659, max_iter=30000)),
+        ('SVC', SVC(C=993.9093797420461, gamma='auto')),
+        ('XGB', XGBClassifier(base_score=None, booster='gbtree', learning_rate=0.1997205014266997, max_depth=7, max_leaves=14, n_estimators=200))
+    ])
+
+    buy_model_aapl_5m = buy_model_aapl_1m
+    sell_model_aapl_5m = sell_model_aapl_1m
+
+    buy_model_btc_1m = VotingClassifier(estimators=[
+        ('LogisticRegression', LogisticRegression(C=0.0010143984975422402, fit_intercept=False, l1_ratio=0.7671361967597897, max_iter=30000)),
+        ('SVC', SVC(C=0.9611592788124548, gamma='auto')),
+        ('XGB', XGBClassifier(base_score=None, booster='gblinear', learning_rate=0.01917548361756064, max_depth=10, max_leaves=6, n_estimators=51))
+    ])
+
+    sell_model_btc_1m = VotingClassifier(estimators=[
+        ('LogisticRegression', LogisticRegression(C=2.184421228408166, fit_intercept=False, l1_ratio=0.8524529692469743, max_iter=30000)),
+        ('SVC', SVC(C=0.6179334609827659, gamma='auto')),
+        ('XGB', XGBClassifier(base_score=None, booster='dart', learning_rate=0.1762776732287373, max_depth=9, max_leaves=20, n_estimators=135))
+    ])
+
+    buy_model_btc_5m = buy_model_btc_1m
+    sell_model_btc_5m = sell_model_btc_1m
+
+    # Entrenar los modelos con los datos de prueba
+    for model in [buy_model_aapl_1m, sell_model_aapl_1m, buy_model_aapl_5m, sell_model_aapl_5m,
+                  buy_model_btc_1m, sell_model_btc_1m, buy_model_btc_5m, sell_model_btc_5m]:
+        model.fit(data_aapl_5m_ts[['RSI', 'ATR', 'Williams_%R']], np.random.randint(0, 2, size=len(data_aapl_5m_ts)))
+
+    return (data_aapl_1m_ts, data_aapl_5m_ts, data_btc_1m_ts, data_btc_5m_ts,
+            buy_model_aapl_1m, sell_model_aapl_1m, buy_model_aapl_5m, sell_model_aapl_5m,
+            buy_model_btc_1m, sell_model_btc_1m, buy_model_btc_5m, sell_model_btc_5m)
+
+def main():
+    (data_aapl_1m_ts, data_aapl_5m_ts, data_btc_1m_ts, data_btc_5m_ts,
+     buy_model_aapl_1m, sell_model_aapl_1m, buy_model_aapl_5m, sell_model_aapl_5m,
+     buy_model_btc_1m, sell_model_btc_1m, buy_model_btc_5m, sell_model_btc_5m) = prepare_data_and_models()
+
+    # Ejecutar backtesting
+    portfolio_value_aapl_1m = run_backtest_with_models(data_aapl_1m_ts, buy_model_aapl_1m, sell_model_aapl_1m, 1_000_000)
+    portfolio_value_aapl_5m = run_backtest_with_models(data_aapl_5m_ts, buy_model_aapl_5m, sell_model_aapl_5m, 1_000_000)
+    portfolio_value_btc_1m = run_backtest_with_models(data_btc_1m_ts, buy_model_btc_1m, sell_model_btc_1m, 7_500_000)
+    portfolio_value_btc_5m = run_backtest_with_models(data_btc_5m_ts, buy_model_btc_5m, sell_model_btc_5m, 7_500_000)
+
+    # Benchmark portfolio
+    capital_benchmark_aapl = 1_000_000
+    capital_benchmark_btc = 5_500_000
+
+    portfolio_value_benchmark_aapl_1m = calculate_benchmark(data_aapl_1m_ts, capital_benchmark_aapl)
+    portfolio_value_benchmark_aapl_5m = calculate_benchmark(data_aapl_5m_ts, capital_benchmark_aapl)
+    portfolio_value_benchmark_btc_1m = calculate_benchmark(data_btc_1m_ts, capital_benchmark_btc)
+    portfolio_value_benchmark_btc_5m = calculate_benchmark(data_btc_5m_ts, capital_benchmark_btc)
+
+    # Generar y mostrar gráficos
+    plot_portfolio_value(portfolio_value_aapl_1m, portfolio_value_benchmark_aapl_1m, 
+                         f'AAPL 1M Active={(portfolio_value_aapl_1m[-1] / 1_000_000 - 1) * 100:.2f}%\n' + 
+                         f'AAPL 1M Passive={(portfolio_value_benchmark_aapl_1m.values[-1] / 1_000_000 - 1) * 100:.2f}%')
+
+    plot_portfolio_value(portfolio_value_aapl_5m, portfolio_value_benchmark_aapl_5m, 
+                         f'AAPL 5M Active={(portfolio_value_aapl_5m[-1] / 1_000_000 - 1) * 100:.2f}%\n' + 
+                         f'AAPL 5M Passive={(portfolio_value_benchmark_aapl_5m.values[-1] / 1_000_000 - 1) * 100:.2f}%')
+
+    plot_portfolio_value(portfolio_value_btc_1m, portfolio_value_benchmark_btc_1m, 
+                         f'BTC 1M Active={(portfolio_value_btc_1m[-1] / 5_500_000 - 1) * 100:.2f}%\n' + 
+                         f'BTC 1M Passive={(portfolio_value_benchmark_btc_1m.values[-1] / 5_500_000 - 1) * 100:.2f}%')
+
+    plot_portfolio_value(portfolio_value_btc_5m, portfolio_value_benchmark_btc_5m, 
+                         f'BTC 5M Active={(portfolio_value_btc_5m[-1] / 5_500_000 - 1) * 100:.2f}%\n' + 
+                         f'BTC 5M Passive={(portfolio_value_benchmark_btc_5m.values[-1] / 5_500_000 - 1) * 100:.2f}%')
+
+if __name__ == "__main__":
+    main()
