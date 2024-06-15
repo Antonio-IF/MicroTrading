@@ -12,8 +12,9 @@ Traders who use technical analysis look at historical price data and use various
 
 This project delves into the technical analysis of two prominent assets, Apple (AAPL) and Bitcoin (BTC), with the overall goal of maximizing trading returns. To achieve this goal, we employ three different indicators: the Relative Strength Index (RSI), Williams %R, and Average True Range (ATR). By implementing seven strategies that combine these indicators, generating unique signals for buying and selling opportunities. In addition, we optimize the parameters associated with each indicator to guarantee the best possible results.
 
+## Steps to run the code
 
-
+```markdown
 # Instructions to Run the MicroTrading Project
 
 ## Steps for Windows:
@@ -35,12 +36,12 @@ This project delves into the technical analysis of two prominent assets, Apple (
 
 4. **Install dependencies**:
    ```sh
-   pip install -r technical_analysis\requirements.txt
+   pip install -r Classification\requirements.txt
    ```
 
 5. **Run the main script**:
    ```sh
-   python run technical_analysis\__main__.py
+   python run Classification\__main__.py
    ```
 
 ## Steps for Mac:
@@ -62,16 +63,12 @@ This project delves into the technical analysis of two prominent assets, Apple (
 
 4. **Install dependencies**:
    ```sh
-   pip install -r technical_analysis/requirements.txt
+   pip install -r classification/requirements.txt
    ```
 
 5. **Run the main script**:
    ```sh
-   python run technical_analysis\__main__.py
+   python run Classification\__main__.py
    ```
 
-## Additional Notes:
-- **Ensure that the `requirements.txt` file is in the correct directory and contains all necessary dependencies.**
-- **Consider adding a `README.md` file in your repository with these detailed steps for easy reference.**
-- **Make sure your main script `__main__.py` has a defined entry point if necessary, using something like `if __name__ == "__main__":`.**
-```
+
