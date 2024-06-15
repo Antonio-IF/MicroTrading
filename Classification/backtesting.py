@@ -135,10 +135,10 @@ def plot_portfolio_value(portfolio_value, portfolio_value_benchmark, title):
 
 def prepare_data_and_models():
     # Cargar datos de prueba
-    data_aapl_1m_ts = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_1m_test.csv").dropna()
-    data_aapl_5m_ts = pd.read_csv("./technical_analysis/data/AAPL/aapl_project_5m_test.csv").dropna()
-    data_btc_1m_ts  = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_1m_test.csv").dropna()
-    data_btc_5m_ts  = pd.read_csv("./technical_analysis/data/BTC-USD/btc_project_5m_test.csv").dropna()
+    data_aapl_1m_ts = pd.read_csv("./Classification/data/AAPL/aapl_project_1m_test.csv").dropna()
+    data_aapl_5m_ts = pd.read_csv("./Classification/data/AAPL/aapl_project_5m_test.csv").dropna()
+    data_btc_1m_ts  = pd.read_csv("./Classification/data/BTC-USD/btc_project_1m_test.csv").dropna()
+    data_btc_5m_ts  = pd.read_csv("./Classification/data/BTC-USD/btc_project_5m_test.csv").dropna()
 
     # Calcular los indicadores para los datos de prueba
     for df in [data_aapl_1m_ts, data_aapl_5m_ts, data_btc_1m_ts, data_btc_5m_ts]:
@@ -209,7 +209,7 @@ def main():
     portfolio_value_btc_5m = run_backtest_with_models(data_btc_5m_ts, buy_model_btc_5m, sell_model_btc_5m, 7_500_000)
 
     # Benchmark portfolio
-    capital_benchmark_aapl = 1_000_000
+    capital_benchmark_aapl = 2_500_000
     capital_benchmark_btc = 5_500_000
 
     portfolio_value_benchmark_aapl_1m = calculate_benchmark(data_aapl_1m_ts, capital_benchmark_aapl)
