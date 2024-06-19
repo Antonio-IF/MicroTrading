@@ -2,7 +2,7 @@
 
 Understanding the microstructure of financial markets and mastering trading systems is essential for anyone looking to succeed in the fast-paced world of finance. Key aspects such as market microstructure, algorithmic trading, and quantitative analysis, leveraging techniques from technical analysis to advanced Deep Learning models, are crucial.
 
-Through this projectw, we will gain the skills to make informed decisions and navigate the complexities of modern trading systems, enhancing our ability to operate effectively in financial markets.
+Through this projects, we will gain the skills to make informed decisions and navigate the complexities of modern trading systems, enhancing our ability to operate effectively in financial markets.
 
 ## Projects
 
