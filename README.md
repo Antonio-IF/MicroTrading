@@ -6,7 +6,7 @@ Through this projects, we will gain the skills to make informed decisions and na
 
 ## Projects
 
-In this course, we will work on five distinct projects. These projects are designed to enhance our skills in making informed decisions and navigating the complexities of modern trading systems.
+In this course, we will work on four distinct projects. These projects are designed to enhance our skills in making informed decisions and navigating the complexities of modern trading systems.
 
 ### 1. Microstructure
 
@@ -25,7 +25,6 @@ Traders who use technical analysis look at historical price data and use various
 In this project we focus on the implementation and optimization of classification models to predict buy and sell signals in the stock and cryptocurrency markets. We employ a combination of machine learning algorithms, including Logistic Regression, Support Vector Classification (SVC), and XGBoost, integrated into a voting classifier to enhance the accuracy of our predictions.
 We utilize the optuna library for hyperparameter optimization, further improving the performance of our models. The ultimate goal is to provide an effective tool for anticipating market movements and maximizing expected returns in financial operations.
 
-### 4.
+### 4. Fixing Transformer
 
-### 5.
-
+Continuous monitoring, frequent retraining, and strategic capital management are crucial for maintaining an effective trading model. While challenges persist, the insights gained provide a pathway for ongoing refinement and improved performance in dynamic financial markets.
