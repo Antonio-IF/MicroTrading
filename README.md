@@ -1,4 +1,4 @@
-#  MICROSTRUCTURE AND TRADING SYSTEMS - Summer 2024
+#  MICROSTRUCTURE AND TRADING SYSTEMS - Summer 2024 
 
 Understanding the microstructure of financial markets and mastering trading systems is essential for anyone looking to succeed in the fast-paced world of finance. Key aspects such as market microstructure, algorithmic trading, and quantitative analysis, leveraging techniques from technical analysis to advanced Deep Learning models, are crucial.
 
