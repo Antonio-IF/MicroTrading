@@ -1,30 +1,74 @@
-#  MICROSTRUCTURE AND TRADING SYSTEMS - Summer 2024 
+# **MICROSTRUCTURE AND TRADING SYSTEMS – Summer 2024**
 
-Understanding the microstructure of financial markets and mastering trading systems is essential for anyone looking to succeed in the fast-paced world of finance. Key aspects such as market microstructure, algorithmic trading, and quantitative analysis, leveraging techniques from technical analysis to advanced Deep Learning models, are crucial.
+Understanding the **microstructure of financial markets** and mastering **trading systems** is critical for thriving in the fast-paced world of modern finance. This course bridges theory and practice, covering key concepts such as:
 
-Through this projects, we will gain the skills to make informed decisions and navigate the complexities of modern trading systems, enhancing our ability to operate effectively in financial markets.
+* **Market Microstructure**
+* **Algorithmic Trading**
+* **Quantitative Analysis**
+* Tools ranging from **Technical Analysis** to advanced **Deep Learning** models
 
-## Projects
+Through hands-on projects, we will develop the skills needed to make data-driven decisions, optimize trading strategies, and navigate the complexities of today’s financial markets.
 
-In this course, we will work on four distinct projects. These projects are designed to enhance our skills in making informed decisions and navigating the complexities of modern trading systems.
+---
 
-### 1. Microstructure
+## **Projects Overview**
 
-This project explores market microstructure concepts, focusing on bid-ask spreads and market maker profitability. Inspired by Bagehot's insights and Copeland & Galai's model, we aim to implement these theories practically.
+This course includes **four major projects**, each designed to strengthen specific competencies in trading and market analysis.
 
-We will simulate stock price movements and introduce a probability factor for informed trades. Deliverables include plotting price distributions, calculating expected revenue under different trade scenarios, and determining optimal bid and ask prices based on Copeland & Galai's model.
+### **1. Microstructure**
 
-### 2. Technical Analysis
+Focuses on **bid–ask spreads** and **market maker profitability**, drawing on Bagehot’s insights and the Copeland & Galai model.
+**Key tasks:**
 
-Technical analysis is a fundamental tool for trading, as it provides valuable information on market trends, support and resistance levels, pattern recognition, risk management, and entry and exit timing.
+* Simulate stock price movements with a probability factor for informed trades
+* Plot price distributions under different conditions
+* Calculate expected revenue for various trade scenarios
+* Determine optimal bid and ask prices using Copeland & Galai’s framework
 
-Traders who use technical analysis look at historical price data and use various tools and indicators to identify patterns and trends. These patterns can indicate the future direction of an asset's price, which can help traders make informed decisions about when to buy or sell.
+---
 
-### 3. Classification
+### **2. Technical Analysis**
 
-In this project we focus on the implementation and optimization of classification models to predict buy and sell signals in the stock and cryptocurrency markets. We employ a combination of machine learning algorithms, including Logistic Regression, Support Vector Classification (SVC), and XGBoost, integrated into a voting classifier to enhance the accuracy of our predictions.
-We utilize the optuna library for hyperparameter optimization, further improving the performance of our models. The ultimate goal is to provide an effective tool for anticipating market movements and maximizing expected returns in financial operations.
+Covers chart-based methods for identifying trends, patterns, and price levels that signal optimal entry and exit points.
+**Focus areas:**
 
-### 4. Fixing Transformer
+* Support & resistance identification
+* Trend and pattern recognition
+* Risk management strategies
+* Timing for market entries and exits
 
-Continuous monitoring, frequent retraining, and strategic capital management are crucial for maintaining an effective trading model. While challenges persist, the insights gained provide a pathway for ongoing refinement and improved performance in dynamic financial markets.
+---
+
+### **3. Classification**
+
+Applies **machine learning** to predict **buy/sell signals** in equities and cryptocurrencies.
+**Key methods:**
+
+* Logistic Regression, Support Vector Classification (SVC), XGBoost
+* Integration via a **Voting Classifier** for improved accuracy
+* **Hyperparameter optimization** using Optuna
+  **Objective:** Maximize predictive performance and returns through data-driven signals.
+
+---
+
+### **4. Fixing Transformer**
+
+Focuses on maintaining robust trading models through:
+
+* Continuous performance monitoring
+* Frequent retraining cycles
+* Strategic capital allocation
+  **Goal:** Adapt models to evolving market conditions for sustained profitability.
+
+---
+
+## **Learning Outcomes**
+
+By the end of this course, participants will be able to:
+
+* Analyze and simulate **market microstructure** mechanics
+* Apply **technical analysis** for informed trading decisions
+* Build and optimize **machine learning trading models**
+* Implement **model maintenance** and adaptation strategies for dynamic markets
+
+
